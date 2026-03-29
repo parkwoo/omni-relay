@@ -1,5 +1,19 @@
 """
-Utility helpers for omni-relay
+OmniRelay Utility Helpers
+=========================
+
+Common utilities for OmniRelay including headers, API key management, and referral links.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Usage:
+    from omnirelay.utils import get_client_headers, ensure_api_key, format_credits_table
+    
+    headers = get_client_headers("Bearer sk-xxx")
+    api_key = ensure_api_key("gemini")
+    print(format_credits_table())
 """
 
 import os

@@ -1,8 +1,32 @@
 #!/usr/bin/env python3
 """
-FreeRide - Free AI for OpenClaw
-Automatically manage and switch between free AI models on OpenRouter
-for unlimited free AI access.
+OmniRelay - Multi-Cloud AI Failover for OpenClaw
+================================================
+
+High availability LLM API routing with intelligent failover across 9+ AI providers.
+Automatically manages rate limit recovery and model rotation for uninterrupted AI access.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Features:
+  - Automatic failover on HTTP 429/503 errors
+  - Rate limit detection and cooldown tracking
+  - Quality-based model ranking
+  - Multi-provider support (Gemini, Qwen, Zhipu, DeepSeek, Novita, xAI, etc.)
+  - Persistent state across restarts
+  - <100ms switch time on failure
+
+Usage:
+  python main.py auto          # Auto-select best model
+  python main.py list          # List available models
+  python main.py switch <id>   # Switch to specific model
+  python main.py status        # Show current configuration
+
+Environment Variables:
+  GEMINI_API_KEY, DASHSCOPE_API_KEY, ZHIPU_API_KEY, DEEPSEEK_API_KEY,
+  NOVITA_API_KEY, XAI_API_KEY, OPENROUTER_API_KEY, OPENAI_API_KEY, KILOCODE_API_KEY
 """
 
 import argparse
@@ -24,7 +48,7 @@ except ImportError:
 # Constants
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
 OPENCLAW_CONFIG_PATH = Path.home() / ".openclaw" / "openclaw.json"
-CACHE_FILE = Path.home() / ".openclaw" / ".freeride-cache.json"
+CACHE_FILE = Path.home() / ".openclaw" / ".omnirelay-cache.json"
 CACHE_DURATION_HOURS = 6
 
 # Free model ranking criteria (higher is better)
@@ -430,9 +454,9 @@ def cmd_list(args):
 
     print(f"\nTotal free models available: {len(models)}")
     print("\nCommands:")
-    print("  freeride switch <model>      Set as primary model")
-    print("  freeride switch <model> -f   Add to fallbacks only (keep current primary)")
-    print("  freeride auto                Auto-select best model")
+    print("  omnirelay switch <model>      Set as primary model")
+    print("  omnirelay switch <model> -f   Add to fallbacks only (keep current primary)")
+    print("  omnirelay auto                Auto-select best model")
 
 
 def cmd_switch(args):
@@ -462,7 +486,7 @@ def cmd_switch(args):
 
     if not matched_model:
         print(f"Error: Model '{model_id}' not found in free models list.")
-        print("Use 'freeride list' to see available models.")
+        print("Use 'omnirelay list' to see available models.")
         sys.exit(1)
 
     if as_fallback:
@@ -582,7 +606,7 @@ def cmd_status(args):
     current = get_current_model(config)
     fallbacks = get_current_fallbacks(config)
 
-    print("FreeRide Status")
+    print("OmniRelay Status")
     print("=" * 50)
 
     # API Key status
@@ -702,8 +726,8 @@ def cmd_fallbacks(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="freeride",
-        description="FreeRide - Free AI for OpenClaw. Manage free models from OpenRouter."
+        prog="omnirelay",
+        description="OmniRelay - Multi-Cloud AI Failover for OpenClaw. Manage models across 9+ providers."
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

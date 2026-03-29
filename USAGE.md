@@ -327,7 +327,7 @@ OmniRelay tracks rate-limited models so you never have to think about it.
 1. Model returns a rate-limit signal (HTTP 429, 503, or keyword match)
 2. Model enters **30-minute cooldown** — excluded from routing
 3. Next model in the fallback chain takes over immediately
-4. Cooldown state is saved to `~/.openclaw/.freeride-watcher-state.json` — survives restarts
+4. Cooldown state is saved to `~/.openclaw/.omnirelay-cooldown.json` — survives restarts
 5. After 30 minutes, the model silently re-enters rotation
 
 ### Viewing cooldown status

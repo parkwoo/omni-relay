@@ -38,7 +38,7 @@ Every developer building with AI APIs hits the same wall:
 | **Failover latency** | < 100ms |
 | **Error detection** | HTTP 429 / 503, keyword patterns (`rate limit`, `quota exceeded`, …) |
 | **Routing strategies** | `quality` · `speed` · `balanced` (round-robin) |
-| **Cooldown tracking** | Persists across restarts (`~/.openclaw/.freeride-watcher-state.json`) |
+| **Cooldown tracking** | Persists across restarts (`~/.openclaw/.omnirelay-cooldown.json`) |
 | **Free model database** | GitHub Actions updates every 3 days, 34+ free models |
 | **Identity headers** | Every request carries `User-Agent`, `X-Title`, `HTTP-Referer` |
 | **OpenClaw integration** | Native skill — auto-updates agent model config |

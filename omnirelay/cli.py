@@ -1,5 +1,30 @@
 """
-CLI tool
+OmniRelay CLI - Command Line Interface
+======================================
+
+Manage multi-cloud AI failover configuration for OpenClaw.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Commands:
+  relay auto              Auto-configure best models from configured providers
+  relay list              List available models by provider
+  relay switch <model>    Switch to specific model (primary or fallback)
+  relay status            View current configuration and cooldown status
+  relay test <model>      Test if a model is responding
+  relay fallbacks         Configure fallback chain without changing primary
+  relay refresh           Show model database info or clear cooldowns
+  relay credits           Show free credit signup links
+
+Usage:
+  relay auto --count 5              # Configure 5 fallback models
+  relay switch gemini-2.5-flash     # Set as primary model
+  relay switch grok-3 --fallback    # Add to fallback chain
+  relay status                      # Check current configuration
+  relay test qwen-max               # Test if model responds
+  relay credits                     # Get signup links for free credits
 """
 
 import click

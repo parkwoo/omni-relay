@@ -1,5 +1,30 @@
 """
 xAI (Grok) API Provider - OpenAI-compatible API
+===============================================
+
+OmniRelay provider for xAI Grok models.
+OpenAI-compatible API interface.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - $25 one-time credit
+  - $150/month with data sharing program enabled
+  - No credit card required
+
+Models:
+  - Grok 3 - Latest flagship model
+  - Grok 3 Mini - Fast, efficient variant
+
+API Docs:
+  - https://console.x.ai
+
+Usage:
+  from omnirelay.providers import XAIProvider
+  provider = XAIProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

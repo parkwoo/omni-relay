@@ -1,7 +1,26 @@
 """
 Google Gemini API Provider - Native Google API access
+=====================================================
 
-Uses the new google.genai API (replaces deprecated google.generativeai)
+OmniRelay provider for Google Gemini API.
+Supports Gemini 2.5 Flash, 2.0 Flash, and other Gemini models.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - 1M tokens/min free (Gemini 2.5 Flash)
+  - No credit card required
+
+API Docs:
+  - https://ai.google.dev/gemini-api/docs
+  - https://github.com/googleapis/python-genai
+
+Usage:
+  from omnirelay.providers import GeminiProvider
+  provider = GeminiProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

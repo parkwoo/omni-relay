@@ -1,5 +1,30 @@
 """
-Novita AI API Provider - At-cost proxy with DeepSeek support
+Novita AI API Provider - OpenAI-compatible API
+==============================================
+
+OmniRelay provider for Novita AI.
+OpenAI-compatible API interface with DeepSeek R1 and Llama models.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - $20 one-time credit (OmniRelay partner)
+  - No credit card required
+  - Signup: https://novita.ai/?ref=mjdjzgr&utm_source=affiliate
+
+Models:
+  - DeepSeek R1 - World-class reasoning model
+  - Llama 3.1 70B - 131K context, fast inference
+
+API Docs:
+  - https://api.novita.ai/v3/openai
+
+Usage:
+  from omnirelay.providers import NovitaProvider
+  provider = NovitaProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

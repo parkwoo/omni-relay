@@ -1,5 +1,29 @@
 """
-OpenAI API Provider
+OpenAI API Provider - Official OpenAI API
+=========================================
+
+OmniRelay provider for OpenAI models.
+Official OpenAI API interface.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - $5 trial credit (new users)
+  - No credit card required
+
+Models:
+  - GPT-4o - Latest flagship model
+  - GPT-4o Mini - Fast, cost-effective variant
+
+API Docs:
+  - https://platform.openai.com/docs
+
+Usage:
+  from omnirelay.providers import OpenAIProvider
+  provider = OpenAIProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

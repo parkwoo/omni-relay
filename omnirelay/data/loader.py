@@ -1,6 +1,20 @@
 """
-Model Database Loader
-Loads community-maintained free models database from JSON
+OmniRelay Model Database Loader
+===============================
+
+Loads community-maintained free models database from JSON.
+Updated daily via GitHub Actions.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Usage:
+    from omnirelay.data import ModelDatabase
+    
+    db = ModelDatabase()
+    free_models = db.get_free_models("zhipu")
+    all_providers = db.get_all_providers()
 """
 
 import json

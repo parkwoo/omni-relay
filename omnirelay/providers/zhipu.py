@@ -1,5 +1,32 @@
 """
 Zhipu AI (GLM) API Provider - OpenAI-compatible API
+===================================================
+
+OmniRelay provider for Zhipu AI GLM models.
+OpenAI-compatible API interface.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - GLM-4-Flash series free since Aug 2024
+  - Rate limits may apply
+  - No credit card required
+
+Models:
+  - GLM-4.7-Flash - Latest flash model, fast and efficient
+  - GLM-4.7 - Standard model
+  - GLM-4-Air - Optimized for speed
+
+API Docs:
+  - International: https://open.bigmodel.cn
+  - China: https://open.bigmodel.cn (same endpoint)
+
+Usage:
+  from omnirelay.providers import ZhipuProvider
+  provider = ZhipuProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

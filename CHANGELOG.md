@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `_is_popular_model()` - keyword-based popularity detection
 - **Documentation updates**:
   - Removed outdated 6-hour cache references
-  - Updated cooldown file path to `.freeride-watcher-state.json`
+  - Updated cooldown file path to `.omnirelay-cooldown.json`
   - Fixed Kilo provider context length (32k → 204k)
   - Updated Kilo free quota description ($5 one-time → $5 initial credit)
 - **Referral links**: Updated all provider signup URLs to international versions

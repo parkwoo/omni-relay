@@ -1,5 +1,32 @@
 """
 OpenRouter API Provider - 30+ free models
+=========================================
+
+OmniRelay provider for OpenRouter.
+Access to 30+ free models from various providers.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - 30+ free models forever
+  - No credit card required
+  - Rate limits apply on free tier
+
+Popular Free Models:
+  - NVIDIA Nemotron 3 Super (262K context)
+  - Qwen3 Coder 480B (262K context)
+  - MiniMax M2.5 (196K context)
+  - OpenAI GPT-OSS 120B (131K context)
+
+API Docs:
+  - https://openrouter.ai/docs
+
+Usage:
+  from omnirelay.providers import OpenRouterProvider
+  provider = OpenRouterProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

@@ -1,5 +1,32 @@
 """
 Kilo Gateway Provider - Unified API for 500+ AI models
+======================================================
+
+OmniRelay provider for Kilo Gateway.
+Unified API access to 500+ models including MiniMax, NVIDIA, and more.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - $5 initial credit
+  - MiniMax M2.5 permanently free
+  - No credit card required
+
+Popular Models:
+  - MiniMax M2.5 (204K context) - Free
+  - NVIDIA Nemotron 3 Super (262K context)
+  - Xiaomi Mimo V2 Pro (256K context)
+
+API Docs:
+  - https://kilo.ai/docs
+  - Base URL: https://api.kilo.ai/api/gateway
+
+Usage:
+  from omnirelay.providers import KiloProvider
+  provider = KiloProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

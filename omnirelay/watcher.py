@@ -1,8 +1,32 @@
 #!/usr/bin/env python3
 """
-FreeRide Watcher
-Monitors for rate limits and automatically rotates models.
-Can run as a daemon or be called periodically via cron.
+OmniRelay Watcher - Automatic Rate Limit Recovery
+=================================================
+
+Background service that monitors for rate limit errors and automatically
+rotates models to ensure uninterrupted AI access for OpenClaw.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Features:
+  - Continuous monitoring of API responses
+  - Automatic model rotation on rate limit (HTTP 429/503)
+  - 30-minute cooldown tracking with persistent state
+  - Dynamic ad display for unconfigured providers
+  - Can run as daemon or via cron
+
+Usage:
+  python watcher.py start      # Run as daemon
+  python watcher.py status     # Show cooldown status
+  python watcher.py reset      # Clear all cooldowns
+
+State File:
+  ~/.openclaw/.omnirelay-cooldown.json - Tracks rate-limited models
+
+Cron Example (check every 5 minutes):
+  */5 * * * * cd ~/.openclaw/skills/omnirelay && python -m omnirelay.watcher check
 """
 
 import json
@@ -36,7 +60,7 @@ from .main import (
 
 
 # Constants
-STATE_FILE = Path.home() / ".openclaw" / ".freeride-watcher-state.json"
+STATE_FILE = Path.home() / ".openclaw" / ".omnirelay-cooldown.json"
 RATE_LIMIT_COOLDOWN_MINUTES = 30
 CHECK_INTERVAL_SECONDS = 60
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -293,7 +317,7 @@ def run_daemon():
         print("Error: OPENROUTER_API_KEY not set")
         sys.exit(1)
 
-    print(f"FreeRide Watcher started")
+    print(f"OmniRelay Watcher started")
     print(f"Check interval: {CHECK_INTERVAL_SECONDS}s")
     print(f"Rate limit cooldown: {RATE_LIMIT_COOLDOWN_MINUTES}m")
     print("-" * 50)
@@ -330,8 +354,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        prog="freeride-watcher",
-        description="FreeRide Watcher - Monitor and auto-rotate free AI models"
+        prog="omnirelay-watcher",
+        description="OmniRelay Watcher - Monitor and auto-rotate AI models on rate limit"
     )
     parser.add_argument("--daemon", "-d", action="store_true",
                        help="Run as continuous daemon")
@@ -346,7 +370,7 @@ def main():
 
     if args.status:
         state = load_state()
-        print("FreeRide Watcher Status")
+        print("OmniRelay Watcher Status")
         print("=" * 40)
         print(f"Total rotations: {state.get('rotation_count', 0)}")
         print(f"Last rotation: {state.get('last_rotation', 'Never')}")

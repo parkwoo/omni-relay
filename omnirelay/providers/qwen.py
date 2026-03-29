@@ -1,5 +1,31 @@
 """
 Qwen (Alibaba Tongyi Qianwen) API Provider - OpenAI-compatible mode
+===================================================================
+
+OmniRelay provider for Alibaba Qwen models.
+OpenAI-compatible API interface.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - 1M+ free tokens/month (international users, 90 days validity)
+  - No credit card required
+
+Models:
+  - Qwen Max - Flagship model, best quality
+  - Qwen Plus - Balanced performance
+  - Qwen Turbo - Fast inference
+
+API Docs:
+  - International: https://dashscope-intl.aliyuncs.com
+  - China: https://dashscope.aliyun.com
+
+Usage:
+  from omnirelay.providers import QwenProvider
+  provider = QwenProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional

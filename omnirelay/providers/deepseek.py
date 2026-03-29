@@ -1,5 +1,29 @@
 """
-DeepSeek API Provider - Strongest reasoning capabilities
+DeepSeek API Provider - OpenAI-compatible API
+=============================================
+
+OmniRelay provider for DeepSeek models.
+OpenAI-compatible API interface.
+
+GitHub: https://github.com/parkwoo/omni-relay
+Author: parkwoo
+License: MIT
+
+Free Tier:
+  - $5 one-time credit (~5M tokens)
+  - No credit card required
+
+Models:
+  - DeepSeek R1 (Reasoner) - Best for reasoning tasks
+  - DeepSeek V3 (Chat) - Best for general chat
+
+API Docs:
+  - https://platform.deepseek.com/api-docs
+
+Usage:
+  from omnirelay.providers import DeepSeekProvider
+  provider = DeepSeekProvider(config)
+  models = provider.list_models()
 """
 
 from typing import Optional
