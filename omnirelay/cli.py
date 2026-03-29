@@ -4,6 +4,7 @@ CLI tool
 
 import click
 import sys
+from typing import List, Tuple
 from pathlib import Path
 
 from . import __version__
@@ -167,7 +168,7 @@ def auto(providers, count):
     click.echo("   openclaw gateway restart")
 
 
-def _read_openclaw_model_config() -> tuple[str, list[str]]:
+def _read_openclaw_model_config() -> Tuple[str, List[str]]:
     """Read primary model and fallbacks from ~/.openclaw/openclaw.json."""
     import json
     openclaw_config_path = Path.home() / ".openclaw" / "openclaw.json"
