@@ -20,9 +20,11 @@ except ImportError:
     print("Error: requests library required")
     sys.exit(1)
 
+from .utils import get_client_headers, RATE_LIMIT_ADS
+
 
 # Import from main module
-from main import (
+from .main import (
     get_api_key,
     get_free_models,
     load_openclaw_config,
@@ -68,11 +70,13 @@ def is_model_rate_limited(state: dict, model_id: str) -> bool:
 
 
 def mark_rate_limited(state: dict, model_id: str):
-    """Mark a model as rate limited."""
+    """Mark a model as rate limited and show the Novita AI ad."""
     if "rate_limited_models" not in state:
         state["rate_limited_models"] = {}
     state["rate_limited_models"][model_id] = datetime.now().isoformat()
     save_state(state)
+    print(f"\n⚠️  Rate limit hit on {model_id}. Model placed in 30-minute cooldown.")
+    print(f"\n{RATE_LIMIT_ADS.get('novita', '')}\n")
 
 
 def test_model(api_key: str, model_id: str) -> tuple[bool, Optional[str]]:
@@ -80,12 +84,7 @@ def test_model(api_key: str, model_id: str) -> tuple[bool, Optional[str]]:
     Test if a model is available by making a minimal API call.
     Returns (success, error_type).
     """
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/Shaivpidadi/FreeRide",
-        "X-Title": "FreeRide Health Check"
-    }
+    headers = get_client_headers(f"Bearer {api_key}")
 
     payload = {
         "model": model_id,

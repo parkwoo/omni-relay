@@ -1,19 +1,19 @@
 """
-OpenRouter API Provider - 30+ free models
+OpenAI API Provider
 """
 
 from typing import Optional
 import requests
 
-from ..config import OpenRouterConfig
+from ..config import OpenAIConfig
 from ..models import ModelInfo
 from ..utils import get_client_headers
 
 
-class OpenRouterProvider:
-    """OpenRouter API Provider - 30+ free models"""
+class OpenAIProvider:
+    """OpenAI API Provider"""
 
-    def __init__(self, config: OpenRouterConfig):
+    def __init__(self, config: OpenAIConfig):
         self.config = config
         self.session = requests.Session()
 
@@ -51,7 +51,7 @@ class OpenRouterProvider:
     def generate(self, model_id: str, prompt: str, **kwargs) -> str:
         """Generate content"""
         if not self.config.api_key:
-            raise ValueError("OpenRouter API key not set")
+            raise ValueError("OpenAI API key not set")
 
         headers = get_client_headers(f"Bearer {self.config.api_key}")
 
@@ -61,7 +61,9 @@ class OpenRouterProvider:
             json={
                 "model": model_id,
                 "messages": [{"role": "user", "content": prompt}],
-                **kwargs
+                "temperature": kwargs.get("temperature", 0.7),
+                "max_tokens": kwargs.get("max_tokens", kwargs.get("max_output_tokens", 1024)),
+                "top_p": kwargs.get("top_p", 0.9),
             },
             timeout=60
         )
@@ -74,4 +76,4 @@ class OpenRouterProvider:
     def list_models(self) -> list[ModelInfo]:
         """List available models"""
         from ..models import get_models_by_provider
-        return get_models_by_provider("openrouter")
+        return get_models_by_provider("openai")

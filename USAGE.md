@@ -1,357 +1,437 @@
 # OmniRelay Usage Guide
 
-## 🚀 Quick Start with Novita AI
+## Table of Contents
 
-### Why Start with Novita AI?
-
-**Novita AI** offers the best combination of:
-- 💰 **$20 Free Credits** - One-time bonus
-- 🧠 **DeepSeek R1** - World's #1 reasoning model
-- ⚡ **Ultra-Low Latency** - Fastest response times
-- ✅ **High Reliability** - 99.9% uptime
-
-### 1. Get Novita API Key (Free $20 Credits)
-
-```bash
-# Visit https://novita.ai
-# Sign up (no credit card required)
-# Get $20 free credits instantly
-export NOVITA_API_KEY="your-novita-key"
-```
-
-### 2. Install OmniRelay
-
-```bash
-cd ~/.openclaw/skills
-git clone https://github.com/parkwoo/omni-relay.git omnirelay
-cd omnirelay
-pip install -e .
-```
-
-### 3. Auto-Configure with Novita AI
-
-```bash
-# Quality-first: Novita AI (DeepSeek R1) as primary
-relay auto --strategy quality
-
-# Or balanced: Multiple providers with Novita prioritized
-relay auto --strategy balanced
-```
-
-### 4. Restart OpenClaw
-
-```bash
-openclaw gateway restart
-```
-
-**Done!** You now have Novita AI with 8 automatic fallbacks.
+1. [Installation](#installation)
+2. [API Keys Setup](#api-keys-setup)
+3. [Quick Configuration](#quick-configuration)
+4. [CLI Reference](#cli-reference)
+5. [Routing Strategies](#routing-strategies)
+6. [Deployment Scenarios](#deployment-scenarios)
+7. [Cooldown & Auto-Recovery](#cooldown--auto-recovery)
+8. [Provider Comparison](#provider-comparison)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 📋 CLI Commands
+## Installation
 
-### List Models
+### Via OpenClaw Skill Manager
 
 ```bash
-# List all available models
+openclaw skills install omnirelay
+```
+
+### Manual
+
+```bash
+git clone https://github.com/parkwoo/omni-relay.git ~/.openclaw/skills/omnirelay
+cd ~/.openclaw/skills/omnirelay
+pip install -e .
+```
+
+---
+
+## API Keys Setup
+
+Sign up for one or more providers. OmniRelay becomes more resilient with each additional provider.
+
+| Provider | Free Quota | Env Variable | Sign Up |
+|----------|-----------|-------------|---------|
+| **Novita AI** ★ | $20 one-time | `NOVITA_API_KEY` | [novita.ai](https://novita.ai/?ref=mjdjzgr&utm_source=affiliate) |
+| **xAI (Grok)** | $25 + $150/month* | `XAI_API_KEY` | [console.x.ai](https://console.x.ai) |
+| **Google Gemini** | 1M tokens/min | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
+| **Alibaba Qwen** | 1M+/month | `DASHSCOPE_API_KEY` | [dashscope-intl.aliyuncs.com](https://dashscope-intl.aliyuncs.com) |
+| **DeepSeek** | $5 one-time | `DEEPSEEK_API_KEY` | [platform.deepseek.com](https://platform.deepseek.com) |
+| **OpenRouter** | 30+ free models | `OPENROUTER_API_KEY` | [openrouter.ai/signup](https://openrouter.ai/signup?ref=omnirelay) |
+| **OpenAI** | $5 trial | `OPENAI_API_KEY` | [platform.openai.com/signup](https://platform.openai.com/signup) |
+| **Zhipu AI** | GLM-4.x-Flash free† | `ZHIPU_API_KEY` | [open.bigmodel.cn](https://open.bigmodel.cn) |
+| **Kilo Gateway** | $5 + MiniMax M2.5 free‡ | `KILOCODE_API_KEY` | [kilo.ai/signup](https://kilo.ai/signup?ref=omnirelay) |
+
+★ OmniRelay partner — Novita gives $20 free credits and supports the project
+
+\* xAI: Enable data sharing program for additional $150/month credits  
+† Zhipu: GLM-4.x-Flash series free since Aug 2024 (rate limits may apply)  
+‡ Kilo: MiniMax M2.5 permanently free + $5 credit
+
+**Option A — `.env` file (recommended for local development)**
+
+```bash
+cp .env.example .env
+# Edit .env with your actual keys:
+
+NOVITA_API_KEY=sk-novita-abc123
+XAI_API_KEY=xai-your-key
+GEMINI_API_KEY=AIza-your-key
+DASHSCOPE_API_KEY=sk-dashscope
+DEEPSEEK_API_KEY=sk-deepseek
+OPENROUTER_API_KEY=sk-or-v1-abc123
+OPENAI_API_KEY=sk-openai
+ZHIPU_API_KEY=your-zhipu-key
+KILOCODE_API_KEY=kilocode_abc123
+```
+
+**Option B — environment variables**
+
+```bash
+export NOVITA_API_KEY="your-key"
+export XAI_API_KEY="your-key"
+# … etc
+```
+
+---
+
+## Quick Configuration
+
+```bash
+# Auto-select best models from your configured providers (recommended)
+relay auto
+
+# Limit to specific providers
+relay auto --providers gemini,openrouter
+
+# Longer fallback chain (default: 5)
+relay auto --count 10
+
+# Apply changes
+openclaw gateway restart
+```
+
+---
+
+## CLI Reference
+
+### `relay auto` — Auto-configure
+
+Selects the best primary model and fallback chain from your **configured providers** (those with API keys set), then writes to `~/.openclaw/openclaw.json`.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--providers` / `-p` | _(configured)_ | Comma-separated provider names to use (e.g. `gemini,openrouter`) |
+| `--count` / `-c` | `5` | Number of fallback models |
+
+```bash
+relay auto                              # use all configured providers
+relay auto --providers gemini,openrouter
+relay auto --count 10
+```
+
+---
+
+### `relay list` — List models
+
+By default shows models for providers with API keys set. Use `--all` to browse everything.
+
+| Flag | Description |
+|------|-------------|
+| `--provider` / `-p` | Show only this provider (e.g. `gemini`) |
+| `--count` / `-c` | Limit results per provider (default: 10) |
+| `--all` | Show all providers, even those without an API key |
+
+```bash
 relay list
-
-# List Novita models only
 relay list --provider novita
-
-# Show top 10 models
-relay list --count 10
+relay list --all
+relay list --all --count 5
 ```
 
-### Check Status
+---
+
+### `relay switch` — Set primary or fallback model
+
+Warns if the model's provider has no API key configured.
+
+| Argument / Flag | Description |
+|----------------|-------------|
+| `<model-id>` | Model ID to switch to (e.g. `deepseek-reasoner`) |
+| `--fallback` / `-f` | Add to fallback chain instead of replacing the primary |
 
 ```bash
-# Check current configuration
+relay switch deepseek-reasoner           # set as primary
+relay switch grok-3 --fallback           # add to fallback chain
+relay switch gemini-2.0-flash --fallback
+```
+
+---
+
+### `relay test` — Test a model
+
+Makes a live 5-token probe call to verify a model is responding before switching.
+
+```bash
+relay test gemini-2.5-flash
+relay test deepseek-reasoner
+```
+
+Example output:
+```
+Testing Gemini 2.5 Flash  [gemini] ...
+✓ Gemini 2.5 Flash is responding
+```
+
+---
+
+### `relay status` — View current config
+
+Shows the active primary model, fallback chain, and configured providers (reads from `~/.openclaw/openclaw.json`).
+
+```bash
 relay status
-
-# Check provider availability
-relay providers
 ```
 
-### Switch Model
+Example output:
 
-```bash
-# Switch to Novita's DeepSeek R1
-relay switch deepseek-reasoner
+```
+📊 Current Configuration
 
-# Switch to Llama 3.1
-relay switch llama-3.1-70b-versatile
+Primary: gemini/gemini-2.5-flash
+
+Fallback chain:
+  1. Gemini 2.0 Flash    (gemini)
+  2. DeepSeek R1         (deepseek)
+  3. Grok 3 Mini         (xai)
+
+Available providers:
+  ✓ gemini
+  ✓ deepseek
+  ✓ xai
+
+Total: 3 providers
 ```
 
-### Get Free Credits
+---
+
+### `relay fallbacks` — Configure fallback chain only
+
+Updates the fallback chain without changing the primary model. Filters to configured providers by default.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--count` / `-c` | `5` | Number of fallback models |
+| `--providers` / `-p` | _(configured)_ | Comma-separated provider filter |
 
 ```bash
-# Show all free credit signup links
+relay fallbacks
+relay fallbacks --count 8
+relay fallbacks --providers openrouter,zhipu
+```
+
+---
+
+### `relay refresh` — Show model database info
+
+Displays version, last-updated date, and counts from the bundled model database.
+
+```bash
+relay refresh
+```
+
+---
+
+### `relay credits` — Free credit signup links
+
+```bash
 relay credits
 ```
 
 ---
 
-## 🎯 Routing Strategies
+## Routing
 
-### Quality-First (Recommended for Novita Users)
+`relay auto` ranks models by a quality score derived from:
 
-```bash
-relay auto --strategy quality
-```
+- **Model reputation** — known high-quality models (DeepSeek R1, Gemini 2.5 Flash, Grok 3, etc.) receive a bonus
+- **Context length** — longer context windows score higher
+- **Speed tier** — inferred from model name keywords (`flash`, `turbo`, `mini` → fast)
 
-**Best for:** Maximum quality, always use the best model
-
-**Configuration:**
-- Primary: Novita AI (DeepSeek R1)
-- Fallbacks: Best models from other providers
-
-**When to use:**
-- You want the best reasoning (DeepSeek R1)
-- Quality matters more than cost
-- You have reliable API access
-
-### Balanced (Maximum Reliability)
-
-```bash
-relay auto --strategy balanced
-```
-
-**Best for:** Avoiding rate limits, maximum uptime
-
-**Configuration:**
-- Round-robin across all 9 providers
-- Each provider gets fair usage
-- Automatic load distribution
-
-**When to use:**
-- You hit rate limits frequently
-- Need maximum reliability
-- Want to distribute API usage
-
-### Speed-First
-
-```bash
-relay auto --strategy speed
-```
-
-**Best for:** Real-time applications, lowest latency
-
-**When to use:**
-- Building interactive applications
-- Need fast responses
-- Minimize delay
+The top-scoring model from your configured providers becomes primary; the next `--count` models form the fallback chain.
 
 ---
 
-## 🔄 Rate Limit Auto-Switch
+## Deployment Scenarios
 
-When Novita AI hits a rate limit, OmniRelay automatically switches:
+### Scenario A — Local Development (cost-free)
 
+Optimise for maximum free API credits. Add as many providers as possible.
+
+```bash
+export NOVITA_API_KEY="..."      # $20 — DeepSeek R1
+export GEMINI_API_KEY="..."      # 1M tokens/day — Gemini Flash
+export ZHIPU_API_KEY="..."       # Unlimited — GLM-4-Flash
+export OPENROUTER_API_KEY="..."  # 30+ free models
+
+relay auto --count 8
 ```
-Request to Novita AI (DeepSeek R1)
-  ↓
-HTTP 429 (Rate limit exceeded)
-  ↓
-Auto-switch to xAI/Grok (< 100ms)
-  ↓
-Request succeeds ✓
-```
 
-**Detected Errors:**
-- HTTP 429 (Too Many Requests)
-- HTTP 503 (Service Unavailable)
-- "Rate limit exceeded"
-- "Quota exceeded"
-- "Service temporarily overloaded"
-- "Try again later"
+Expected result: $20+ in free credits, 8-model fallback chain, near-zero downtime locally.
 
 ---
 
-## 💡 Adding More Providers
+### Scenario B — Production (stability first)
 
-### Recommended Setup for Maximum Free Credits
+Use paid-tier providers as primary, free tiers as fallback insurance.
 
 ```bash
-# 1. Novita AI ($20 one-time)
+export DEEPSEEK_API_KEY="..."    # Primary — DeepSeek R1 official
+export XAI_API_KEY="..."         # Fallback 1 — Grok 3 ($25/month)
+export OPENAI_API_KEY="..."      # Fallback 2 — GPT-4o
+export NOVITA_API_KEY="..."      # Fallback 3 — DeepSeek R1 via Novita
+export GEMINI_API_KEY="..."      # Fallback 4 — Gemini Flash
+
+relay auto --count 5
+```
+
+Expected result: Highest quality routing, automatic fallback to paid-tier backups, <100ms recovery.
+
+---
+
+### Scenario C — CI/CD Pipeline
+
+Single fast provider with one reliable fallback. Minimise cold-start time.
+
+```bash
+export GEMINI_API_KEY="..."      # Fast, 1M tokens/day
+export NOVITA_API_KEY="..."      # Fallback
+
+relay auto --count 2
+```
+
+---
+
+### Scenario D — Long context tasks (code review, large files)
+
+Prioritise providers with the largest context windows.
+
+```bash
+# Gemini: 1M token context
+# OpenAI: 128k context
+# Novita/DeepSeek: 64k context
+
+export GEMINI_API_KEY="..."
+export OPENAI_API_KEY="..."
+export NOVITA_API_KEY="..."
+
+relay switch gemini-2.0-flash        # 1M context as primary
+relay switch gpt-4o --fallback       # 128k fallback
+relay auto
+```
+
+---
+
+## Cooldown & Auto-Recovery
+
+OmniRelay tracks rate-limited models so you never have to think about it.
+
+### How it works
+
+1. Model returns a rate-limit signal (HTTP 429, 503, or keyword match)
+2. Model enters **30-minute cooldown** — excluded from routing
+3. Next model in the fallback chain takes over immediately
+4. Cooldown state is saved to `~/.openclaw/.freeride-watcher-state.json` — survives restarts
+5. After 30 minutes, the model silently re-enters rotation
+
+### Viewing cooldown status
+
+```bash
+relay status
+```
+
+```
+⏸️  Models in cooldown (1):
+  ✗ deepseek-reasoner — 18.4 min remaining
+  (run 'relay refresh --clear-cooldown' to reset)
+```
+
+### Manually resetting
+
+```bash
+relay refresh --clear-cooldown              # reset all
+relay refresh --clear-model deepseek-chat   # reset one
+```
+
+---
+
+## Provider Comparison
+
+| Provider | Latency | Context | Free Quota | Reliability | Best Model |
+|----------|---------|---------|------------|-------------|------------|
+| **Novita AI** ★ | Low | 131k | $20 one-time | Very High | DeepSeek R1 |
+| **DeepSeek** | Medium | 128k | $5 one-time | Very High | R1 (Reasoner) |
+| **xAI** | Low | 131k | $25 + $150/month* | Very High | Grok 3 |
+| **Google Gemini** | Very Low | 1M | 1M tokens/min | Very High | 2.5 Flash |
+| **Alibaba Qwen** | Low | 131k | 1M+/month | Very High | Qwen Max |
+| **OpenAI** | Low | 128k | $5 trial | Very High | GPT-4o |
+| **Zhipu AI** | Low | 200k | GLM-4.x-Flash free† | High | GLM-4.7-Flash |
+| **OpenRouter** | Medium | Varies | 30+ models | Medium | Various |
+| **Kilo** | Medium | 204k | $5 + MiniMax M2.5 free‡ | High | MiniMax M2.5 |
+
+★ OmniRelay partner — [Get $20 free credits](https://novita.ai/?ref=mjdjzgr&utm_source=affiliate)
+
+\* xAI: Enable data sharing program for $150/month credits  
+† Zhipu: GLM-4.x-Flash series free since Aug 2024  
+‡ Kilo: MiniMax M2.5 permanently free
+
+---
+
+## Troubleshooting
+
+### API key not found
+
+```bash
+# Check which providers are active
+relay status
+
+# Re-export and retry
 export NOVITA_API_KEY="your-key"
-
-# 2. xAI ($25/month)
-export XAI_API_KEY="your-key"
-
-# 3. Gemini (1M tokens/min)
-export GEMINI_API_KEY="your-key"
-
-# 4. DeepSeek Official (5M tokens)
-export DEEPSEEK_API_KEY="your-key"
-
-# 5. Qwen (1M+/month)
-export DASHSCOPE_API_KEY="your-key"
-
-# 6. OpenRouter (29+ free models)
-export OPENROUTER_API_KEY="your-key"
-
-# Auto-configure with all providers
-relay auto --strategy balanced
+relay auto
 ```
 
-**Total Free Value: $50+ in credits**
+### Rate limit errors appearing frequently
+
+OmniRelay auto-switches, but to reduce frequency add more providers:
+
+```bash
+export GEMINI_API_KEY="..."
+export ZHIPU_API_KEY="..."
+relay auto
+```
+
+### Want to verify a model before switching
+
+```bash
+relay test gemini-2.5-flash
+relay test deepseek-reasoner
+```
+
+### Config not updating OpenClaw
+
+```bash
+# Check that the config file exists
+ls ~/.openclaw/openclaw.json
+
+# Re-run auto-configure
+relay auto
+
+# Restart OpenClaw
+openclaw gateway restart
+```
 
 ---
 
-## 📊 Provider Comparison
-
-| Provider | Free Credits | Best For | Latency |
-|----------|-------------|----------|---------|
-| **Novita AI** ⭐ | **$20 one-time** | **DeepSeek R1, Llama 3.1** | **⚡⚡⚡ Fastest** |
-| xAI | $25/month | Grok 3, Grok 3 Mini | ⚡⚡⚡ Very Fast |
-| Gemini | 1M tokens/min | 2.0 Flash, 1.5 Pro | ⚡⚡⚡ Very Fast |
-| DeepSeek | 5M tokens (~$8.40) | R1, V3 | ⚡⚡ Medium |
-| Qwen | 1M+/month | Max, Plus, Turbo | ⚡⚡⚡ Very Fast |
-| Zhipu AI | Unlimited | GLM-4-Flash | ⚡⚡⚡ Very Fast |
-| OpenRouter | 29+ free forever | Model variety | ⚡⚡ Medium |
-| OpenAI | $5 trial | GPT-4o | ⚡⚡⚡ Very Fast |
-| Kilo | $5 credits | M2.5 Proxy | ⚡⚡⚡ Very Fast |
-
----
-
-## 🎮 Usage Scenarios
-
-### Scenario 1: Maximum Quality (Novita AI Focus)
+## Development
 
 ```bash
-# Use Novita AI's DeepSeek R1 as primary
-export NOVITA_API_KEY="your-key"
-relay auto --strategy quality
-```
-
-**Result:**
-- Primary: DeepSeek R1 (Novita AI)
-- Fallbacks: Best models from other providers
-- Best reasoning quality
-
-### Scenario 2: Maximum Free Credits
-
-```bash
-# Add all free providers
-export NOVITA_API_KEY="your-key"
-export XAI_API_KEY="your-key"
-export GEMINI_API_KEY="your-key"
-export DEEPSEEK_API_KEY="your-key"
-export DASHSCOPE_API_KEY="your-key"
-export OPENROUTER_API_KEY="your-key"
-
-relay auto --strategy balanced -c 9
-```
-
-**Result:**
-- $50+ in free credits
-- 9 providers with automatic failover
-- Maximum reliability
-
-### Scenario 3: Avoid Rate Limits
-
-```bash
-# Configure rate limiting
-relay rate-limit --rps 3 --delay 333
-
-# Use balanced strategy
-relay auto --strategy balanced
-```
-
-**Result:**
-- 3 requests per second
-- 333ms delay between requests
-- Round-robin across providers
-
----
-
-## 🔧 OpenClaw Integration
-
-After running `relay auto`, your OpenClaw config is updated:
-
-```json
-{
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "deepseek-reasoner",
-        "fallbacks": [
-          "llama-3.1-70b-versatile",
-          "grok-3",
-          "gemini-2.0-flash",
-          "qwen-max",
-          "deepseek-chat",
-          "gpt-4o",
-          "glm-4-flash",
-          "qwen/qwen-plus:free"
-        ]
-      }
-    }
-  }
-}
-```
-
-Now when Novita AI hits a rate limit, OpenClaw automatically switches to the next provider.
-
----
-
-## 🧪 Testing
-
-```bash
-cd ~/.openclaw/skills/omnirelay
+# Run all tests
 pytest tests/ -v
+
+# Install in editable mode
+pip install -e .
 ```
 
 ---
 
-## 🛠️ Troubleshooting
+## Support
 
-### "Novita API key not found"
-
-```bash
-# Set your API key
-export NOVITA_API_KEY="your-key"
-
-# Verify
-relay providers
-```
-
-### "Rate limit exceeded"
-
-This is normal! OmniRelay will auto-switch:
-- Check status: `relay status`
-- Verify fallbacks are configured
-- Consider adding more providers
-
-### "Provider not available"
-
-```bash
-# Check provider status
-relay providers
-
-# Verify API key is set
-echo $NOVITA_API_KEY
-
-# Re-run auto-configuration
-relay auto --strategy quality
-```
-
-### "Switching takes too long"
-
-- Check your internet connection
-- Verify provider endpoints are accessible
-- Consider using speed-first strategy: `relay auto --strategy speed`
-
----
-
-## 📞 Support
-
-- **GitHub**: https://github.com/parkwoo/omni-relay
-- **Novita AI**: https://novita.ai
-- **Issues**: https://github.com/parkwoo/omni-relay/issues
-- **Discussions**: https://github.com/parkwoo/omni-relay/discussions
-
----
-
-**OmniRelay: Novita AI-powered multi-cloud resilience. One API, zero downtime.**
+- GitHub: https://github.com/parkwoo/omni-relay
+- Issues: https://github.com/parkwoo/omni-relay/issues
+- Discussions: https://github.com/parkwoo/omni-relay/discussions

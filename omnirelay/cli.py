@@ -1,109 +1,151 @@
 """
-CLI 工具
+CLI tool
 """
 
 import click
 import sys
 from pathlib import Path
 
+from . import __version__
 from .config import OmniRelayConfig, ProviderConfig
-from .models import ModelInfo, rank_models_by_quality, get_all_models
-from .providers import GeminiProvider, OpenRouterProvider, KiloProvider
+from .models import ModelInfo, rank_models_by_quality, get_all_models, get_model_by_id
+from .utils import format_credits_table
 
 
 @click.group()
-@click.version_option("1.2.0")
+@click.version_option(__version__)
 def cli():
-    """OmniRelay - 增强版免费 AI 模型管理"""
+    """OmniRelay - Enhanced free AI model management"""
     pass
 
 
+def _print_provider_section(provider_name: str, models: list, configured: bool, count: int):
+    """Print one provider block in relay list output."""
+    tag = "" if configured else "  (no API key)"
+    click.echo(f"\n📦 {provider_name.upper()}{tag}")
+    click.echo("-" * 40)
+    for i, model in enumerate(models[:count], 1):
+        click.echo(f"{i}. {model.name}")
+        click.echo(f"   Model ID: {model.model_id}")
+        click.echo(f"   Context: {model.context_length:,}")
+        click.echo(f"   Speed: {model.speed}")
+        click.echo(f"   Score: {model.quality_score}/10")
+        click.echo()
+
+
 @cli.command()
-@click.option("--provider", "-p", type=str, help="指定提供商")
-@click.option("--count", "-c", type=int, default=10, help="显示模型数量")
-def list(provider, count):
-    """列出可用的免费模型"""
+@click.option("--provider", "-p", type=str, help="Specify provider")
+@click.option("--count", "-c", type=int, default=10, help="Number of models to display")
+@click.option("--all", "show_all", is_flag=True, help="Show models for all providers, even unconfigured ones")
+def list(provider, count, show_all):
+    """List available free models"""
     config = OmniRelayConfig.load_from_env()
+    available = set(config.get_available_providers())
+    all_models = get_all_models()
 
     if provider:
-        if provider not in config.providers:
-            click.echo(f"❌ 提供商 '{provider}' 未配置", err=True)
+        # Single provider requested — show even if not configured, but note it
+        pmodels = [m for m in all_models if m.provider == provider]
+        if not pmodels:
+            click.echo(f"❌ No models found for provider: {provider}", err=True)
             return
+        _print_provider_section(provider, pmodels, provider in available, count)
+        return
 
-        providers = {provider: config.providers[provider]}
-    else:
-        providers = config.providers
+    if show_all:
+        # All providers, regardless of API key
+        seen: dict = {}
+        for m in all_models:
+            seen.setdefault(m.provider, []).append(m)
+        for pname, pmodels in seen.items():
+            _print_provider_section(pname, pmodels, pname in available, count)
+        return
 
-    for provider_name, provider_config in providers.items():
-        if not provider_config.enabled or not provider_config.api_key:
-            continue
+    # Default: only providers with API keys configured
+    if not available:
+        click.echo("⚠️  No providers configured — no API keys found in environment.")
+        click.echo("   Use --all to browse all available models.")
+        click.echo("   Run: relay credits   to see how to get free API keys.")
+        return
 
-        click.echo(f"\n📦 {provider_name.upper()}")
-        click.echo("-" * 40)
-
-        models = get_all_models()
-        provider_models = [m for m in models if m.provider == provider_name]
-
-        for i, model in enumerate(provider_models[:count], 1):
-            click.echo(f"{i}. {model.name}")
-            click.echo(f"   模型ID: {model.model_id}")
-            click.echo(f"   上下文: {model.context_length:,}")
-            click.echo(f"   速度: {model.speed}")
-            click.echo(f"   评分: {model.quality_score}/10")
-            click.echo()
+    for pname in sorted(available):
+        pmodels = [m for m in all_models if m.provider == pname]
+        if pmodels:
+            _print_provider_section(pname, pmodels, True, count)
 
 
 @cli.command()
 @click.argument("model")
-@click.option("--fallback", "-f", is_flag=True, help="只添加为回退模型")
+@click.option("--fallback", "-f", is_flag=True, help="Add as fallback only")
 def switch(model, fallback):
-    """切换到指定模型"""
+    """Switch to specified model"""
     config = OmniRelayConfig.load_from_env()
 
-    # 查找模型
-    from .models import get_model_by_id
     target_model = get_model_by_id(model)
 
     if not target_model:
-        click.echo(f"❌ 未找到模型: {model}", err=True)
+        click.echo(f"❌ Model not found: {model}", err=True)
         return
 
-    # 更新配置
+    # Warn if the model's provider has no API key configured
+    available = config.get_available_providers()
+    if target_model.provider not in available:
+        env_map = {"qwen": "DASHSCOPE_API_KEY", "kilo": "KILOCODE_API_KEY"}
+        env_var = env_map.get(target_model.provider, f"{target_model.provider.upper()}_API_KEY")
+        click.echo(f"⚠️  Provider '{target_model.provider}' is not configured ({env_var} not set).")
+        click.echo(f"   The model will be saved but may not work until you set the API key.")
+
+    # Update config
     if fallback:
         config.fallbacks.chain.append(target_model.model_id)
-        click.echo(f"✓ 已添加回退模型: {target_model.name}")
+        click.echo(f"✓ Fallback model added: {target_model.name}")
     else:
         config.fallbacks.primary = target_model.model_id
-        click.echo(f"✓ 已设置主模型: {target_model.name}")
+        click.echo(f"✓ Primary model set: {target_model.name}")
 
-    # 写入配置文件
+    # Write config
     write_config(config)
 
-    click.echo("\n📝 请重启 OpenClaw Gateway:")
+    click.echo("\n📝 Please restart OpenClaw Gateway:")
     click.echo("   openclaw gateway restart")
 
 
 @cli.command()
-@click.option("--providers", "-p", type=str, help="指定提供商（逗号分隔）")
-@click.option("--count", "-c", type=int, default=5, help="回退链长度")
+@click.option("--providers", "-p", type=str, help="Specify providers (comma-separated)")
+@click.option("--count", "-c", type=int, default=5, help="Fallback chain length")
 def auto(providers, count):
-    """自动配置最佳免费模型"""
+    """Auto-configure best free models"""
     config = OmniRelayConfig.load_from_env()
 
-    click.echo("🎯 自动配置最佳免费模型\n")
+    click.echo("🎯 Auto-configuring best free models\n")
 
-    # 获取所有可用模型
+    # Get all available models, optionally filtered by provider
     models = rank_models_by_quality()
+    if providers:
+        provider_list = [p.strip() for p in providers.split(",")]
+        models = [m for m in models if m.provider in provider_list]
+        if not models:
+            click.echo(f"❌ No models found for providers: {providers}", err=True)
+            return
+    else:
+        # Default: restrict to providers the user actually has API keys for
+        available = config.get_available_providers()
+        if not available:
+            click.echo("❌ No providers configured. Set at least one API key.", err=True)
+            click.echo("   Run: relay credits   to see how to get free API keys.")
+            return
+        models = [m for m in models if m.provider in available]
+        click.echo(f"Using configured providers: {', '.join(sorted(available))}\n")
 
-    # 选择主模型
+    # Select primary model
     if models:
         best_model = models[0]
         config.fallbacks.primary = best_model.model_id
-        click.echo(f"✓ 主模型: {best_model.name} ({best_model.provider})")
-        click.echo(f"   评分: {best_model.quality_score}/10")
-        click.echo(f"   上下文: {best_model.context_length:,}")
+        click.echo(f"✓ Primary: {best_model.name} ({best_model.provider})")
+        click.echo(f"   Score: {best_model.quality_score}/10")
+        click.echo(f"   Context: {best_model.context_length:,}")
 
-    # 配置回退链
+    # Configure fallback chain
     fallbacks = []
     remaining_models = models[1:]
 
@@ -112,81 +154,244 @@ def auto(providers, count):
 
     config.fallbacks.chain = fallbacks
 
-    click.echo(f"\n✓ 配置了 {len(fallbacks)} 个回退模型:")
+    click.echo(f"\n✓ Configured {len(fallbacks)} fallback models:")
     for i, model_id in enumerate(fallbacks, 1):
         model = get_model_by_id(model_id)
         if model:
             click.echo(f"   {i}. {model.name} ({model.provider})")
 
-    # 写入配置
+    # Write config
     write_config(config)
 
-    click.echo("\n📝 请重启 OpenClaw Gateway:")
+    click.echo("\n📝 Please restart OpenClaw Gateway:")
     click.echo("   openclaw gateway restart")
+
+
+def _read_openclaw_model_config() -> tuple[str, list[str]]:
+    """Read primary model and fallbacks from ~/.openclaw/openclaw.json."""
+    import json
+    openclaw_config_path = Path.home() / ".openclaw" / "openclaw.json"
+    if not openclaw_config_path.exists():
+        return "", []
+    try:
+        with open(openclaw_config_path) as f:
+            oc = json.load(f)
+        model_cfg = oc.get("agents", {}).get("defaults", {}).get("model", {})
+        return model_cfg.get("primary", ""), model_cfg.get("fallbacks", [])
+    except (json.JSONDecodeError, KeyError):
+        return "", []
 
 
 @cli.command()
 def status():
-    """查看当前配置状态"""
+    """View current configuration status"""
     config = OmniRelayConfig.load_from_env()
 
-    click.echo("📊 当前配置状态\n")
+    click.echo("📊 Current Configuration\n")
 
-    # 主模型
-    click.echo(f"主模型: {config.fallbacks.primary}")
+    # Read actual configured values from openclaw.json (write_config writes here)
+    primary, fallbacks = _read_openclaw_model_config()
 
-    # 回退链
-    click.echo("\n回退链:")
-    for i, model_id in enumerate(config.fallbacks.chain, 1):
-        model = get_model_by_id(model_id)
-        if model:
-            click.echo(f"  {i}. {model.name} ({model.provider})")
-        else:
-            click.echo(f"  {i}. {model_id}")
+    # Primary model
+    click.echo(f"Primary: {primary or '(not configured)'}")
 
-    # 可用提供商
-    click.echo("\n可用提供商:")
+    # Fallback chain
+    click.echo("\nFallback chain:")
+    if fallbacks:
+        for i, model_id in enumerate(fallbacks, 1):
+            model = get_model_by_id(model_id)
+            if model:
+                click.echo(f"  {i}. {model.name} ({model.provider})")
+            else:
+                click.echo(f"  {i}. {model_id}")
+    else:
+        click.echo("  (none configured)")
+
+    # Available providers
+    click.echo("\nAvailable providers:")
     available = config.get_available_providers()
     for provider in available:
         click.echo(f"  ✓ {provider}")
 
-    click.echo(f"\n总计: {len(available)} 个提供商")
+    click.echo(f"\nTotal: {len(available)} providers")
+
+
+@cli.command()
+def credits():
+    """Display free credit signup links for all providers"""
+    click.echo("\n🎁 Free API Credits — Sign up to get started\n")
+    click.echo(format_credits_table())
+    click.echo()
+
+
+@cli.command()
+def refresh():
+    """Show model database metadata"""
+    from .data.loader import get_model_database
+    db = get_model_database()
+    meta = db.get_database_metadata()
+    click.echo("📦 Model Database\n")
+    click.echo(f"  Version:      {meta['version']}")
+    click.echo(f"  Last updated: {meta['last_updated']}")
+    click.echo(f"  Providers:    {meta['total_providers']}")
+    click.echo(f"  Free models:  {meta['total_free_models']}")
+    click.echo("\nTo update models, pull the latest free-models.json and restart.")
+
+
+@cli.command()
+@click.option("--count", "-c", type=int, default=5, help="Number of fallback models")
+@click.option("--providers", "-p", type=str, help="Filter providers (comma-separated)")
+def fallbacks(count, providers):
+    """Configure fallback chain without changing the primary model"""
+    config = OmniRelayConfig.load_from_env()
+
+    # Preserve the existing primary from openclaw.json
+    existing_primary, _ = _read_openclaw_model_config()
+    config.fallbacks.primary = existing_primary
+
+    click.echo(f"Primary (unchanged): {existing_primary or '(not configured)'}\n")
+
+    models = rank_models_by_quality()
+    if providers:
+        provider_list = [p.strip() for p in providers.split(",")]
+        models = [m for m in models if m.provider in provider_list]
+        if not models:
+            click.echo(f"❌ No models found for providers: {providers}", err=True)
+            return
+    else:
+        # Default: restrict to providers the user actually has API keys for
+        available = config.get_available_providers()
+        if not available:
+            click.echo("❌ No providers configured. Set at least one API key.", err=True)
+            click.echo("   Run: relay credits   to see how to get free API keys.")
+            return
+        models = [m for m in models if m.provider in available]
+
+    fallback_list = []
+    for model in models:
+        if len(fallback_list) >= count:
+            break
+        # Skip whichever model is already the primary
+        if existing_primary and model.model_id in existing_primary:
+            continue
+        fallback_list.append(model.model_id)
+
+    config.fallbacks.chain = fallback_list
+    write_config(config)
+
+    click.echo(f"\n✓ Configured {len(fallback_list)} fallback models:")
+    for i, model_id in enumerate(fallback_list, 1):
+        model = get_model_by_id(model_id)
+        if model:
+            click.echo(f"   {i}. {model.name} ({model.provider})")
+
+    click.echo("\n📝 Please restart OpenClaw Gateway:")
+    click.echo("   openclaw gateway restart")
+
+
+@cli.command()
+@click.argument("model")
+def test(model):
+    """Test if a model responds (makes a live 5-token probe call)"""
+    from .providers import (
+        GeminiProvider, OpenRouterProvider, KiloProvider,
+        DeepSeekProvider, NovitaProvider, QwenProvider,
+        XAIProvider, OpenAIProvider, ZhipuProvider,
+    )
+
+    PROVIDER_CLASSES = {
+        "gemini": GeminiProvider,
+        "openrouter": OpenRouterProvider,
+        "kilo": KiloProvider,
+        "deepseek": DeepSeekProvider,
+        "novita": NovitaProvider,
+        "qwen": QwenProvider,
+        "xai": XAIProvider,
+        "openai": OpenAIProvider,
+        "zhipu": ZhipuProvider,
+    }
+
+    config = OmniRelayConfig.load_from_env()
+    target = get_model_by_id(model)
+
+    if not target:
+        click.echo(f"❌ Model not found: {model}", err=True)
+        return
+
+    provider_name = target.provider
+    click.echo(f"Testing {target.name}  [{provider_name}] ...")
+
+    if provider_name not in config.providers:
+        env_map = {"qwen": "DASHSCOPE_API_KEY", "kilo": "KILOCODE_API_KEY"}
+        env_var = env_map.get(provider_name, f"{provider_name.upper()}_API_KEY")
+        click.echo(f"❌ Provider not configured — set {env_var} first.", err=True)
+        return
+
+    ProviderClass = PROVIDER_CLASSES.get(provider_name)
+    if not ProviderClass:
+        click.echo(f"❌ Unknown provider: {provider_name}", err=True)
+        return
+
+    provider = ProviderClass(config.providers[provider_name])
+    ok = provider.test_model(target.model_id)
+
+    if ok:
+        click.echo(f"✓ {target.name} is responding")
+    else:
+        click.echo(f"❌ {target.name} did not respond (rate limited or unavailable)")
 
 
 def write_config(config: OmniRelayConfig):
-    """写入配置到 OpenClaw"""
+    """Write config to OpenClaw using an atomic temp-file + rename to avoid corruption."""
     import json
+    import os
+    import tempfile
 
     openclaw_config_path = Path.home() / ".openclaw" / "openclaw.json"
 
     if not openclaw_config_path.exists():
-        click.echo(f"❌ 配置文件不存在: {openclaw_config_path}", err=True)
+        click.echo(f"❌ Config file not found: {openclaw_config_path}", err=True)
         return
 
-    # 读取现有配置
+    # Read existing config
     with open(openclaw_config_path) as f:
         openclaw_config = json.load(f)
 
-    # 更新模型配置
+    # Preserve existing primary when caller has not set one (e.g. relay fallbacks)
+    existing_primary = (
+        openclaw_config.get("agents", {})
+        .get("defaults", {})
+        .get("model", {})
+        .get("primary", "")
+    )
+
     if "agents" not in openclaw_config:
         openclaw_config["agents"] = {}
     if "defaults" not in openclaw_config["agents"]:
         openclaw_config["agents"]["defaults"] = {}
 
     openclaw_config["agents"]["defaults"]["model"] = {
-        "primary": config.fallbacks.primary,
-        "fallbacks": config.fallbacks.chain
+        "primary": config.fallbacks.primary or existing_primary,
+        "fallbacks": config.fallbacks.chain,
     }
 
-    # 写回文件
-    with open(openclaw_config_path, "w") as f:
-        json.dump(openclaw_config, f, indent=2)
+    # Atomic write: write to a sibling temp file then rename so a crash mid-write
+    # cannot leave the config in a partially-written / invalid state.
+    dir_path = openclaw_config_path.parent
+    fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".json.tmp")
+    try:
+        with os.fdopen(fd, "w") as tmp_f:
+            json.dump(openclaw_config, tmp_f, indent=2)
+        os.replace(tmp_path, openclaw_config_path)
+    except Exception:
+        os.unlink(tmp_path)
+        raise
 
-    click.echo(f"✓ 配置已写入: {openclaw_config_path}")
+    click.echo(f"✓ Config written to: {openclaw_config_path}")
 
 
 def main():
-    """CLI 入口"""
+    """CLI entry point"""
     cli()
 
 

@@ -1,7 +1,7 @@
 """
 FreeRide Enhanced
-增强版免费 AI 模型管理
+Enhanced free AI model management
 """
 
-__version__ = "1.1.0"
-__author__ = "Your Name"
+__version__ = "1.4.0"
+__author__ = "parkwoo"

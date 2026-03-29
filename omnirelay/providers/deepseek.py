@@ -2,12 +2,12 @@
 DeepSeek API Provider - Strongest reasoning capabilities
 """
 
-import os
 from typing import Optional
 import requests
 
 from ..config import DeepSeekConfig
 from ..models import ModelInfo
+from ..utils import get_client_headers
 
 
 class DeepSeekProvider:
@@ -31,10 +31,7 @@ class DeepSeekProvider:
         if not self.config.api_key:
             return False
 
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = get_client_headers(f"Bearer {self.config.api_key}")
 
         try:
             response = self.session.post(
@@ -56,10 +53,7 @@ class DeepSeekProvider:
         if not self.config.api_key:
             raise ValueError("DeepSeek API key not set")
 
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = get_client_headers(f"Bearer {self.config.api_key}")
 
         response = self.session.post(
             f"{self.config.endpoint}/chat/completions",

@@ -1,30 +1,73 @@
 {
-  "name": "freeride",
-  "displayName": "FreeRide - Free AI for OpenClaw",
-  "version": "1.0.1",
-  "description": "Unlimited free AI access for OpenClaw via OpenRouter's free models with automatic fallback switching",
-  "author": "Shaishav Pidadi",
-  "repository": "https://github.com/Shaivpidadi/FreeRide",
+  "name": "omnirelay",
+  "displayName": "OmniRelay - Multi-Cloud AI Failover",
+  "version": "1.4.0",
+  "description": "9 AI providers with automatic failover. Zero downtime routing for OpenClaw.",
+  "author": "parkwoo",
+  "repository": "https://github.com/parkwoo/omni-relay",
   "license": "MIT",
   "commands": [
+    "auto",
     "list",
     "switch",
-    "auto",
     "status",
+    "test",
+    "fallbacks",
     "refresh",
-    "fallbacks"
+    "credits"
   ],
   "binaries": {
-    "freeride": "main:main",
-    "freeride-watcher": "watcher:main"
+    "relay": "omnirelay.cli:main"
   },
   "dependencies": {
-    "requests": ">=2.31.0"
+    "requests": ">=2.31.0",
+    "pydantic": ">=2.0.0",
+    "click": ">=8.1.0"
   },
   "config": {
+    "DEEPSEEK_API_KEY": {
+      "description": "DeepSeek API key ($5 free credit)",
+      "required": false,
+      "env": true
+    },
+    "NOVITA_API_KEY": {
+      "description": "Novita AI API key ($20 free credit)",
+      "required": false,
+      "env": true
+    },
+    "GEMINI_API_KEY": {
+      "description": "Google Gemini API key (1M tokens/min free)",
+      "required": false,
+      "env": true
+    },
+    "XAI_API_KEY": {
+      "description": "xAI Grok API key ($25/month)",
+      "required": false,
+      "env": true
+    },
+    "DASHSCOPE_API_KEY": {
+      "description": "Alibaba Qwen API key (1M+ free tokens/month)",
+      "required": false,
+      "env": true
+    },
     "OPENROUTER_API_KEY": {
-      "description": "Your OpenRouter API key (get free at openrouter.ai/keys)",
-      "required": true,
+      "description": "OpenRouter API key (30+ free models, no credit card)",
+      "required": false,
+      "env": true
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key ($5 trial credit)",
+      "required": false,
+      "env": true
+    },
+    "ZHIPU_API_KEY": {
+      "description": "Zhipu AI API key (GLM-4-Flash free)",
+      "required": false,
+      "env": true
+    },
+    "KILOCODE_API_KEY": {
+      "description": "Kilo Gateway API key ($5 free credit)",
+      "required": false,
       "env": true
     }
   },
@@ -37,5 +80,5 @@
       "agents.defaults.models"
     ]
   },
-  "install": "npx clawhub@latest install freeride && cd ~/.openclaw/workspace/skills/free-ride && pip install -e ."
+  "install": "pip install -e . && relay auto"
 }

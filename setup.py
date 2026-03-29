@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="omnirelay",
-    version="1.2.0",
+    version="1.4.0",
     description="OmniRelay for OpenClaw - The resilient AI dispatching layer. One API, zero downtime.",
     author="parkwoo",
     url="https://github.com/parkwoo/omni-relay",
@@ -11,8 +11,7 @@ setup(
         "click>=8.1.0",
         "pydantic>=2.0.0",
         "requests>=2.31.0",
-        "google-generativeai>=0.3.0",
-        "groq>=0.5.0",
+        "google-genai>=1.0.0",
     ],
     entry_points={
         "console_scripts": [

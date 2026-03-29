@@ -1,0 +1,7 @@
+{
+  "skill": "omnirelay",
+  "version": "1.3.0",
+  "changelog": "See CHANGELOG.md for full version history",
+  "tags": ["latest", "stable", "ai-routing", "failover", "multi-cloud"],
+  "releaseNotes": "OmniRelay v1.3.0 - 9 AI providers with automatic failover, 34+ free models, dynamic model discovery"
+}

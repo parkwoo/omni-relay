@@ -1,21 +1,37 @@
 """
-Kilo Gateway Provider - At-cost proxy for multiple models
+Kilo Gateway Provider - Unified API for 500+ AI models
 """
 
-import os
 from typing import Optional
 import requests
 
 from ..config import KiloConfig
 from ..models import ModelInfo
+from ..utils import get_client_headers
 
 
 class KiloProvider:
-    """Kilo Gateway Provider - At-cost proxy"""
+    """
+    Kilo Gateway Provider - Unified API for 500+ models
+
+    Kilo Gateway provides a unified API that routes requests to many models
+    behind a single endpoint and API key.
+
+    Base URL: https://api.kilo.ai/api/gateway
+    Authentication: Bearer Token (API Key)
+
+    See omnirelay/models.py for complete model list and metadata.
+    """
 
     def __init__(self, config: KiloConfig):
         self.config = config
+        self.base_url = config.endpoint
         self.session = requests.Session()
+
+        if config.api_key:
+            headers = get_client_headers()
+            headers["X-API-Key"] = config.api_key
+            self.session.headers.update(headers)
 
     def is_available(self) -> bool:
         """Check if provider is available"""
@@ -31,14 +47,14 @@ class KiloProvider:
         if not self.config.api_key:
             return False
 
-        headers = {
-            "X-API-Key": self.config.api_key
-        }
-
         try:
-            response = self.session.get(
-                f"{self.config.endpoint}/v1/models/{model_id}",
-                headers=headers,
+            response = self.session.post(
+                f"{self.base_url}/v1/chat/completions",
+                json={
+                    "model": model_id,
+                    "messages": [{"role": "user", "content": "test"}],
+                    "max_tokens": 10
+                },
                 timeout=10
             )
             return response.status_code == 200
@@ -50,18 +66,14 @@ class KiloProvider:
         if not self.config.api_key:
             raise ValueError("Kilo Gateway API key not set")
 
-        headers = {
-            "X-API-Key": self.config.api_key,
-            "Content-Type": "application/json"
-        }
-
         response = self.session.post(
-            f"{self.config.endpoint}/v1/chat/completions",
-            headers=headers,
+            f"{self.base_url}/v1/chat/completions",
             json={
                 "model": model_id,
                 "messages": [{"role": "user", "content": prompt}],
-                **kwargs
+                "temperature": kwargs.get("temperature", 0.7),
+                "max_tokens": kwargs.get("max_tokens", kwargs.get("max_output_tokens", 1024)),
+                "top_p": kwargs.get("top_p", 0.9),
             },
             timeout=60
         )

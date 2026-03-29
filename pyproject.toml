@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "omnirelay"
-version = "1.2.0"
+version = "1.4.0"
 description = "The resilient AI dispatching layer. One API, zero downtime."
 authors = [
     {name = "parkwoo"}
@@ -24,8 +24,7 @@ dependencies = [
     "click>=8.1.0",
     "pydantic>=2.0.0",
     "requests>=2.31.0",
-    "google-generativeai>=0.3.0",
-    "groq>=0.5.0",
+    "google-genai>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -44,8 +43,8 @@ Homepage = "https://github.com/parkwoo/omni-relay"
 Repository = "https://github.com/parkwoo/omni-relay"
 Issues = "https://github.com/parkwoo/omni-relay/issues"
 
-[tool.setuptools]
-packages = ["omnirelay"]
+[tool.setuptools.packages.find]
+where = ["."]
 
 [tool.black]
 line-length = 100
