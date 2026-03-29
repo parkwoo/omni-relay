@@ -371,9 +371,52 @@ def write_config(config: OmniRelayConfig):
     if "defaults" not in openclaw_config["agents"]:
         openclaw_config["agents"]["defaults"] = {}
 
+    # Map OmniRelay provider names to OpenClaw provider names
+    PROVIDER_MAP = {
+        "gemini": "google",
+        "zhipu": "z-ai",
+        "qwen": "qwen",
+        "deepseek": "deepseek",
+        "novita": "novita",
+        "xai": "x-ai",
+        "openai": "openai",
+        "openrouter": "openrouter",
+        "kilo": "kilocode",
+    }
+
+    def to_openclaw_model_id(model_id: str) -> str:
+        """Convert OmniRelay model_id to OpenClaw format (provider/model-id)."""
+        # If already in provider/model format, map the provider name
+        if "/" in model_id:
+            provider, model = model_id.split("/", 1)
+            openclaw_provider = PROVIDER_MAP.get(provider, provider)
+            return f"{openclaw_provider}/{model}"
+        # Otherwise try to infer provider from model name
+        model_lower = model_id.lower()
+        if "gemini" in model_lower:
+            return f"google/{model_id}"
+        elif "glm" in model_lower:
+            return f"z-ai/{model_id}"
+        elif "qwen" in model_lower:
+            return f"qwen/{model_id}"
+        elif "deepseek" in model_lower:
+            return f"deepseek/{model_id}"
+        elif "grok" in model_lower:
+            return f"x-ai/{model_id}"
+        elif "minimax" in model_lower or "mimo" in model_lower:
+            return f"kilocode/{model_id}"
+        # Default: return as-is
+        return model_id
+
+    primary = config.fallbacks.primary or existing_primary
+    if primary:
+        primary = to_openclaw_model_id(primary)
+
+    fallbacks = [to_openclaw_model_id(m) for m in config.fallbacks.chain]
+
     openclaw_config["agents"]["defaults"]["model"] = {
-        "primary": config.fallbacks.primary or existing_primary,
-        "fallbacks": config.fallbacks.chain,
+        "primary": primary,
+        "fallbacks": fallbacks,
     }
 
     # Atomic write: write to a sibling temp file then rename so a crash mid-write
