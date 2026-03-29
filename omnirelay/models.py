@@ -512,5 +512,15 @@ def get_model_by_id(model_id: str) -> Optional[ModelInfo]:
 
 
 def rank_models_by_quality() -> list[ModelInfo]:
-    """Sort models by quality score descending"""
-    return sorted(AVAILABLE_MODELS, key=lambda m: m.quality_score, reverse=True)
+    """Sort models by quality score descending, removing duplicates by base model name"""
+    sorted_models = sorted(AVAILABLE_MODELS, key=lambda m: m.quality_score, reverse=True)
+    
+    # Remove duplicates: keep highest scored version of each base model
+    seen: dict = {}
+    for model in sorted_models:
+        # Extract base model name (e.g., "glm-4.7-flash" from "zhipu/glm-4.7-flash")
+        base_name = model.model_id.split("/")[-1].split(":")[0] if "/" in model.model_id else model.model_id
+        if base_name not in seen:
+            seen[base_name] = model
+    
+    return list(seen.values())
