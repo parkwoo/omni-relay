@@ -44,8 +44,8 @@ class FallbackConfig(BaseModel):
     retry_delay: int = 5
 
 
-class FreeRideConfig(BaseModel):
-    """FreeRide 总配置"""
+class OmniRelayConfig(BaseModel):
+    """OmniRelay 总配置"""
 
     providers: dict[str, ProviderConfig] = {}
     fallbacks: FallbackConfig = FallbackConfig(primary="", chain=[])
@@ -55,7 +55,7 @@ class FreeRideConfig(BaseModel):
         env_file_encoding = "utf-8"
 
     @classmethod
-    def load_from_env(cls) -> "FreeRideConfig":
+    def load_from_env(cls) -> "OmniRelayConfig":
         """从环境变量加载配置"""
         config = cls()
 
@@ -97,4 +97,4 @@ class FreeRideConfig(BaseModel):
 
 
 # 默认配置
-config = FreeRideConfig.load_from_env()
+config = OmniRelayConfig.load_from_env()
