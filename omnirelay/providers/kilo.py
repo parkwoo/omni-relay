@@ -1,5 +1,5 @@
 """
-Kilo Gateway 提供商
+Kilo Gateway Provider - At-cost proxy for multiple models
 """
 
 import os
@@ -11,23 +11,23 @@ from ..models import ModelInfo
 
 
 class KiloProvider:
-    """Kilo Gateway 提供商"""
+    """Kilo Gateway Provider - At-cost proxy"""
 
     def __init__(self, config: KiloConfig):
         self.config = config
         self.session = requests.Session()
 
     def is_available(self) -> bool:
-        """检查是否可用"""
+        """Check if provider is available"""
         return self.config.enabled and self.config.api_key is not None
 
     def get_model(self, model_id: str) -> Optional[ModelInfo]:
-        """获取模型信息"""
+        """Get model information"""
         from ..models import get_model_by_id
         return get_model_by_id(model_id)
 
     def test_model(self, model_id: str) -> bool:
-        """测试模型是否可用"""
+        """Test if model is available"""
         if not self.config.api_key:
             return False
 
@@ -46,7 +46,7 @@ class KiloProvider:
             return False
 
     def generate(self, model_id: str, prompt: str, **kwargs) -> str:
-        """生成内容"""
+        """Generate content"""
         if not self.config.api_key:
             raise ValueError("Kilo Gateway API key not set")
 
@@ -72,6 +72,6 @@ class KiloProvider:
         return data["choices"][0]["message"]["content"]
 
     def list_models(self) -> list[ModelInfo]:
-        """列出可用模型"""
+        """List available models"""
         from ..models import get_models_by_provider
         return get_models_by_provider("kilo")

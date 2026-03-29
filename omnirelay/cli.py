@@ -6,15 +6,15 @@ import click
 import sys
 from pathlib import Path
 
-from .config import FreeRideConfig, ProviderConfig
+from .config import OmniRelayConfig, ProviderConfig
 from .models import ModelInfo, rank_models_by_quality, get_all_models
 from .providers import GeminiProvider, OpenRouterProvider, KiloProvider
 
 
 @click.group()
-@click.version_option("1.1.0")
+@click.version_option("1.2.0")
 def cli():
-    """FreeRide Enhanced - 增强版免费 AI 模型管理"""
+    """OmniRelay - 增强版免费 AI 模型管理"""
     pass
 
 
@@ -23,7 +23,7 @@ def cli():
 @click.option("--count", "-c", type=int, default=10, help="显示模型数量")
 def list(provider, count):
     """列出可用的免费模型"""
-    config = FreeRideConfig.load_from_env()
+    config = OmniRelayConfig.load_from_env()
 
     if provider:
         if provider not in config.providers:
@@ -58,7 +58,7 @@ def list(provider, count):
 @click.option("--fallback", "-f", is_flag=True, help="只添加为回退模型")
 def switch(model, fallback):
     """切换到指定模型"""
-    config = FreeRideConfig.load_from_env()
+    config = OmniRelayConfig.load_from_env()
 
     # 查找模型
     from .models import get_model_by_id
@@ -88,7 +88,7 @@ def switch(model, fallback):
 @click.option("--count", "-c", type=int, default=5, help="回退链长度")
 def auto(providers, count):
     """自动配置最佳免费模型"""
-    config = FreeRideConfig.load_from_env()
+    config = OmniRelayConfig.load_from_env()
 
     click.echo("🎯 自动配置最佳免费模型\n")
 
@@ -128,7 +128,7 @@ def auto(providers, count):
 @cli.command()
 def status():
     """查看当前配置状态"""
-    config = FreeRideConfig.load_from_env()
+    config = OmniRelayConfig.load_from_env()
 
     click.echo("📊 当前配置状态\n")
 
@@ -153,7 +153,7 @@ def status():
     click.echo(f"\n总计: {len(available)} 个提供商")
 
 
-def write_config(config: FreeRideConfig):
+def write_config(config: OmniRelayConfig):
     """写入配置到 OpenClaw"""
     import json
 
