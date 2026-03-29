@@ -180,14 +180,14 @@ sequenceDiagram
     participant OR as OmniRelay
     participant P1 as Primary
     participant P2 as Fallback
-    
+
     Client->>OR: Request
     OR->>P1: Try Primary
     P1-->>OR: 429 Rate Limit
     OR->>P2: Switch Fallback
     P2-->>OR: Success ✓
     OR-->>Client: Response
-    Note over OR: &lt;100ms
+    Note over OR: <100ms
 ```
 
 **What happens:**
